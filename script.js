@@ -1,192 +1,99 @@
-const tripKey = "vakantie-thijn-trip";
-const packingKey = "vakantie-thijn-packing";
-const budgetKey = "vakantie-thijn-budget";
+const photoFeed = document.querySelector("#photoFeed");
 
-const destinationInput = document.querySelector("#destinationInput");
-const dateInput = document.querySelector("#dateInput");
-const saveTripButton = document.querySelector("#saveTripButton");
-const tripSummary = document.querySelector("#tripSummary");
+const memories = [
+  {
+    tag: "02:17",
+    title: "Er zijn foto's waar je geen uitleg bij wilt geven en dit is er een van",
+    copy: "Je opent de pagina, scrollt omlaag en dan krijg je dit gewoon vol in beeld. Precies de juiste energie.",
+    note: "Deze staat nu op plek 1.",
+    image: "assets/chatgpt-image-2026-07-02-191533.png",
+    hideDetail: true,
+  },
+  {
+    tag: "13:10",
+    title: "Schuimsnor, half oog dicht, volledig overtuigd van zichzelf",
+    copy: "Alsof iemand per ongeluk charisma probeerde te combineren met pure onzin en toen dit kreeg.",
+    note: "Tweede echte foto nu zonder bier in beeld.",
+    image: "assets/IMG_4463_no_beer.png",
+    hideDetail: true,
+  },
+  {
+    tag: "16:28",
+    title: "Alsof iemand zei doe eens normaal en hij het tegenovergestelde koos",
+    copy: "Perfecte vakantiefoto als je doel is om voor altijd chantagemateriaal te bewaren.",
+    note: "Derde echte foto toegevoegd, nog steeds zonder crop.",
+    image: "assets/IMG_4461.PNG",
+    hideDetail: true,
+  },
+  {
+    tag: "19:54",
+    title: "Thijn kijkt alsof hij net iets heel raars heeft gehoord",
+    copy: "Exact het soort foto dat je als openingsklap op een QR-site wilt hebben.",
+    note: "De oude eerste foto staat nu op plek 4.",
+    image: "assets/IMG_4462.PNG",
+    hideDetail: true,
+  },
+  {
+    tag: "23:43",
+    title: "Hier begon het niveau officieel zorgwekkend te worden",
+    copy: "Een beeld waar je vijf seconden naar kijkt en meteen denkt: ja dit moet online.",
+    note: "Zet hier gewoon je meest diabolische caption onder, maar houd het niet-expliciet.",
+    image: "assets/IMG_4569.JPG",
+    hideDetail: true,
+  },
+  {
+    tag: "08:11",
+    title: "Zijaanzicht met exact nul reden om dit prive te houden",
+    copy: "Dit is gewoon zo'n foto die schreeuwt om onderaan een zwarte roast-scroll te eindigen.",
+    note: "Nieuwe echte foto toegevoegd als slotstuk.",
+    image: "assets/IMG_4568.JPG",
+    hideDetail: true,
+  },
+];
 
-const packingInput = document.querySelector("#packingInput");
-const addPackingButton = document.querySelector("#addPackingButton");
-const packingList = document.querySelector("#packingList");
+function renderFeed() {
+  photoFeed.innerHTML = "";
 
-const budgetInput = document.querySelector("#budgetInput");
-const spentInput = document.querySelector("#spentInput");
-const saveBudgetButton = document.querySelector("#saveBudgetButton");
-const budgetSummary = document.querySelector("#budgetSummary");
+  memories.forEach((memory, index) => {
+    const card = document.createElement("article");
+    card.className = "memory-card";
 
-function readJson(key, fallback) {
-  const raw = localStorage.getItem(key);
+    const top = document.createElement("div");
+    top.className = "card-topline";
 
-  if (!raw) {
-    return fallback;
-  }
+    const tag = document.createElement("span");
+    tag.className = "tag";
+    tag.textContent = memory.tag;
 
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return fallback;
-  }
-}
+    const counter = document.createElement("span");
+    counter.className = "counter";
+    counter.textContent = String(index + 1).padStart(2, "0");
 
-function writeJson(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
-}
+    top.append(tag, counter);
 
-function formatDate(dateValue) {
-  if (!dateValue) {
-    return "nog geen datum";
-  }
+    const photoWrap = document.createElement("div");
+    photoWrap.className = "photo-wrap";
 
-  return new Intl.DateTimeFormat("nl-NL", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(dateValue));
-}
+    const image = document.createElement("img");
+    image.src = memory.image;
+    image.alt = memory.title;
+    photoWrap.append(image);
 
-function renderTrip() {
-  const trip = readJson(tripKey, null);
+    const title = document.createElement("h3");
+    title.className = "card-title";
+    title.textContent = memory.title;
 
-  if (!trip) {
-    tripSummary.textContent = "Nog geen trip opgeslagen.";
-    return;
-  }
+    const copy = document.createElement("p");
+    copy.className = "card-copy";
+    copy.textContent = memory.copy;
 
-  tripSummary.innerHTML =
-    "<strong>" +
-    trip.destination +
-    "</strong><br />Vertrek: " +
-    formatDate(trip.date);
-}
+    const note = document.createElement("div");
+    note.className = "card-note";
+    note.textContent = memory.note;
 
-function renderPacking() {
-  const items = readJson(packingKey, []);
-
-  if (!items.length) {
-    packingList.innerHTML = "<li>Je lijst is nog leeg.</li>";
-    return;
-  }
-
-  packingList.innerHTML = "";
-
-  items.forEach((item) => {
-    const li = document.createElement("li");
-    li.className = item.done ? "done" : "";
-
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.checked = item.done;
-    checkbox.addEventListener("change", () => togglePackingItem(item.id));
-
-    const label = document.createElement("span");
-    label.className = "packing-label";
-    label.textContent = item.label;
-
-    const removeButton = document.createElement("button");
-    removeButton.className = "ghost-button";
-    removeButton.textContent = "Verwijder";
-    removeButton.addEventListener("click", () => removePackingItem(item.id));
-
-    li.append(checkbox, label, removeButton);
-    packingList.append(li);
+    card.append(top, photoWrap, title, copy, note);
+    photoFeed.append(card);
   });
 }
 
-function renderBudget() {
-  const budget = readJson(budgetKey, null);
-
-  if (!budget) {
-    budgetSummary.textContent = "Vul je budget in om inzicht te krijgen.";
-    return;
-  }
-
-  const remaining = budget.total - budget.spent;
-  const statusText =
-    remaining >= 0
-      ? "Je hebt nog euro " + remaining + " over."
-      : "Je zit euro " + Math.abs(remaining) + " boven budget.";
-
-  budgetSummary.innerHTML =
-    "<strong>Totaal:</strong> euro " +
-    budget.total +
-    "<br /><strong>Geschat:</strong> euro " +
-    budget.spent +
-    "<br />" +
-    statusText;
-}
-
-function saveTrip() {
-  const destination = destinationInput.value.trim();
-
-  if (!destination) {
-    tripSummary.textContent = "Vul eerst een bestemming in.";
-    return;
-  }
-
-  writeJson(tripKey, {
-    destination,
-    date: dateInput.value,
-  });
-
-  renderTrip();
-}
-
-function addPackingItem() {
-  const label = packingInput.value.trim();
-
-  if (!label) {
-    return;
-  }
-
-  const items = readJson(packingKey, []);
-  items.push({
-    id: crypto.randomUUID(),
-    label,
-    done: false,
-  });
-  writeJson(packingKey, items);
-  packingInput.value = "";
-  renderPacking();
-}
-
-function togglePackingItem(id) {
-  const items = readJson(packingKey, []).map((item) =>
-    item.id === id ? { ...item, done: !item.done } : item,
-  );
-  writeJson(packingKey, items);
-  renderPacking();
-}
-
-function removePackingItem(id) {
-  const items = readJson(packingKey, []).filter((item) => item.id !== id);
-  writeJson(packingKey, items);
-  renderPacking();
-}
-
-function saveBudget() {
-  const total = Number(budgetInput.value);
-  const spent = Number(spentInput.value);
-
-  if (Number.isNaN(total) || Number.isNaN(spent)) {
-    budgetSummary.textContent = "Vul beide bedragen in.";
-    return;
-  }
-
-  writeJson(budgetKey, { total, spent });
-  renderBudget();
-}
-
-saveTripButton.addEventListener("click", saveTrip);
-addPackingButton.addEventListener("click", addPackingItem);
-saveBudgetButton.addEventListener("click", saveBudget);
-packingInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    addPackingItem();
-  }
-});
-
-renderTrip();
-renderPacking();
-renderBudget();
+renderFeed();
