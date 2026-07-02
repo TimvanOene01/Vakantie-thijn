@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vakantie Thijn</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Frontend only vakantieproject</p>
+          <h1>Bouw je reis alsof hij al begonnen is.</h1>
+          <p class="intro">
+            Een lichte vakantieplanner voor ideeen, checklisten en budgetten.
+            Alles draait lokaal in je browser, zonder backend.
+          </p>
+          <div class="hero-actions">
+            <a href="#planner" class="button primary">Start plannen</a>
+            <a href="#inspiratie" class="button secondary">Bekijk inspiratie</a>
+          </div>
+        </div>
+        <div class="hero-card">
+          <div class="stamp">Zomer 2026</div>
+          <h2>Weekendje weg of grote trip?</h2>
+          <p>
+            Kies een bestemming, stel je budget in en vink je spullen af zodra
+            ze in de tas zitten.
+          </p>
+          <ul class="mini-stats">
+            <li><span>3</span> panelen</li>
+            <li><span>0</span> backend</li>
+            <li><span>100%</span> jouw stijl</li>
+          </ul>
+        </div>
+      </header>
+
+      <main id="planner">
+        <section class="grid-section">
+          <article class="panel spotlight">
+            <div class="panel-heading">
+              <p class="eyebrow">Bestemming</p>
+              <h2>Trip focus</h2>
+            </div>
+            <label class="field">
+              <span>Waar wil je heen?</span>
+              <input id="destinationInput" type="text" placeholder="Bijv. Valencia" />
+            </label>
+            <label class="field">
+              <span>Vertrekdatum</span>
+              <input id="dateInput" type="date" />
+            </label>
+            <button id="saveTripButton" class="button primary wide">Opslaan</button>
+            <div class="trip-summary" id="tripSummary">
+              Nog geen trip opgeslagen.
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <p class="eyebrow">Checklist</p>
+              <h2>Inpakken</h2>
+            </div>
+            <div class="inline-form">
+              <input id="packingInput" type="text" placeholder="Voeg item toe" />
+              <button id="addPackingButton" class="button secondary">Toevoegen</button>
+            </div>
+            <ul id="packingList" class="packing-list"></ul>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <p class="eyebrow">Budget</p>
+              <h2>Wat mag het kosten?</h2>
+            </div>
+            <label class="field">
+              <span>Totaal budget in euro</span>
+              <input id="budgetInput" type="number" min="0" step="10" placeholder="750" />
+            </label>
+            <label class="field">
+              <span>Geschatte kosten in euro</span>
+              <input id="spentInput" type="number" min="0" step="10" placeholder="420" />
+            </label>
+            <button id="saveBudgetButton" class="button primary wide">Bereken</button>
+            <div id="budgetSummary" class="budget-summary">
+              Vul je budget in om inzicht te krijgen.
+            </div>
+          </article>
+        </section>
+
+        <section id="inspiratie" class="inspiration">
+          <div class="section-copy">
+            <p class="eyebrow">Sfeer</p>
+            <h2>Een startscherm dat niet voelt als huiswerk</h2>
+          </div>
+          <div class="postcards">
+            <article class="postcard sea">
+              <p>Kust</p>
+              <strong>Zout, zon en weinig planning</strong>
+            </article>
+            <article class="postcard city">
+              <p>Stad</p>
+              <strong>Terrassen, nachten en verdwalen</strong>
+            </article>
+            <article class="postcard mountain">
+              <p>Natuur</p>
+              <strong>Rugzak dicht, telefoon weg</strong>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
