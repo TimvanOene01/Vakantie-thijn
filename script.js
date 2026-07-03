@@ -2,8 +2,7 @@ const photoFeed = document.querySelector("#photoFeed");
 
 const supabaseConfig = {
   url: "https://lardnnecoesiazbjwilp.supabase.co",
-  anonKey:
-    "sb_publishable_FNqzAtTU_0Q7Nzp44CV5-w_Me1xOQ85eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxhcmRubmVjb2VzaWF6Ymp3aWxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwODc1MzYsImV4cCI6MjA5ODY2MzUzNn0.EqBnWAwYanHhPgSuPE8_XWL-QyxqI_o0Wnn2e4BjPGI",
+  anonKey: "sb_publishable_FNqzAtTU_0Q7Nzp44CV5-w_Me1xOQ85",
   table: "photo_comments",
 };
 
