@@ -10,12 +10,14 @@ create table if not exists public.photo_comments (
 
 alter table public.photo_comments enable row level security;
 
+drop policy if exists "comments zijn leesbaar voor iedereen" on public.photo_comments;
 create policy "comments zijn leesbaar voor iedereen"
 on public.photo_comments
 for select
 to anon, authenticated
 using (true);
 
+drop policy if exists "iedereen mag comments plaatsen" on public.photo_comments;
 create policy "iedereen mag comments plaatsen"
 on public.photo_comments
 for insert
