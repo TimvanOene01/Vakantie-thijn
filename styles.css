@@ -177,6 +177,65 @@ a {
   font-weight: 800;
 }
 
+.comments-panel {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #0b0b0b;
+  overflow: hidden;
+}
+
+.comments-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  list-style: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.comments-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.comments-toggle::after {
+  content: "+";
+  flex: 0 0 auto;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.comments-panel[open] .comments-toggle::after {
+  content: "-";
+}
+
+.comments-body {
+  padding: 0 12px 12px;
+}
+
+.giscus {
+  width: 100%;
+}
+
+.giscus-frame {
+  width: 100%;
+  border: 0;
+  background: transparent;
+}
+
+.comments-help {
+  margin: 0;
+  padding: 14px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  line-height: 1.5;
+  background: var(--panel-soft);
+}
+
 @media (min-width: 700px) {
   .app-shell {
     width: min(100% - 32px, 720px);
