@@ -497,6 +497,35 @@ a {
   resize: vertical;
 }
 
+.upload-dropzone {
+  display: grid;
+  gap: 8px;
+  padding: 18px 14px;
+  border: 1px dashed rgba(255, 255, 255, 0.24);
+  border-radius: 14px;
+  background: #111;
+  cursor: pointer;
+}
+
+.upload-dropzone[data-dragging="true"] {
+  border-color: rgba(255, 255, 255, 0.58);
+  background: #181818;
+}
+
+.upload-file-input {
+  display: none;
+}
+
+.upload-dropzone-title {
+  font-weight: 800;
+}
+
+.upload-dropzone-meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 .admin-button {
   min-height: 42px;
   padding: 0 14px;

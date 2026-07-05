@@ -78,7 +78,12 @@
               <input id="photoCommentIdInput" class="admin-input" type="text" placeholder="Comment id bv foto-8" />
               <textarea id="photoCopyInput" class="admin-textarea" rows="3" placeholder="Tekst onder foto"></textarea>
               <textarea id="photoNoteInput" class="admin-textarea" rows="3" placeholder="Notitie"></textarea>
-              <input id="photoImageInput" class="admin-input full" type="text" placeholder="Afbeelding URL of assets/pad" />
+              <label id="photoDropzone" class="upload-dropzone full" for="photoFileInput">
+                <input id="photoFileInput" class="upload-file-input" type="file" accept="image/*" />
+                <span class="upload-dropzone-title">Sleep foto hierheen of tik om te kiezen</span>
+                <span id="photoFileMeta" class="upload-dropzone-meta">Nog geen bestand gekozen</span>
+              </label>
+              <input id="photoImageInput" class="admin-input full" type="text" placeholder="Of gebruik alsnog een afbeelding URL" />
             </div>
           </section>
 

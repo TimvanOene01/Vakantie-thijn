@@ -31,6 +31,9 @@ const photoCommentIdInput = document.querySelector("#photoCommentIdInput");
 const photoCopyInput = document.querySelector("#photoCopyInput");
 const photoNoteInput = document.querySelector("#photoNoteInput");
 const photoImageInput = document.querySelector("#photoImageInput");
+const photoFileInput = document.querySelector("#photoFileInput");
+const photoDropzone = document.querySelector("#photoDropzone");
+const photoFileMeta = document.querySelector("#photoFileMeta");
 
 const saveHeroButton = document.querySelector("#saveHeroButton");
 const addPhotoButton = document.querySelector("#addPhotoButton");
@@ -43,6 +46,7 @@ const supabaseConfig = {
   photosTable: "photo_entries",
   settingsTable: "site_settings",
   visitsTable: "page_visits",
+  storageBucket: "vakantie-uploads",
 };
 
 const adminCredsStorageKey = "vakantie_admin_creds_v2";
@@ -138,6 +142,7 @@ let currentHero = { ...defaultHero };
 let currentPhotos = defaultMemories.map((memory) => ({ ...memory }));
 let adminCreds = readAdminCreds();
 let adminClient = createAdminClient(adminCreds);
+let selectedPhotoFile = null;
 
 function readAdminCreds() {
   try {
@@ -200,6 +205,18 @@ function hideStatuses() {
   if (adminLoginStatus) {
     adminLoginStatus.hidden = true;
   }
+}
+
+function setSelectedPhotoFile(file) {
+  selectedPhotoFile = file || null;
+
+  if (!photoFileMeta) {
+    return;
+  }
+
+  photoFileMeta.textContent = selectedPhotoFile
+    ? `${selectedPhotoFile.name} gekozen`
+    : "Nog geen bestand gekozen";
 }
 
 function countWords(value) {
@@ -592,6 +609,37 @@ async function saveHero() {
 
 async function addPhoto() {
   const displayOrder = Number(photoOrderInput.value);
+  let finalImage = photoImageInput.value.trim();
+
+  if (selectedPhotoFile) {
+    setAdminStatus("Foto uploaden...", false);
+
+    const extension = selectedPhotoFile.name.includes(".")
+      ? selectedPhotoFile.name.split(".").pop().toLowerCase()
+      : "jpg";
+    const safeExtension = extension.replace(/[^a-z0-9]/g, "") || "jpg";
+    const fileName = `${Date.now()}-${crypto.randomUUID()}.${safeExtension}`;
+    const filePath = `photo-uploads/${fileName}`;
+
+    const { error: uploadError } = await adminClient.storage
+      .from(supabaseConfig.storageBucket)
+      .upload(filePath, selectedPhotoFile, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: selectedPhotoFile.type || "image/jpeg",
+      });
+
+    if (uploadError) {
+      setAdminStatus("Uploaden lukte niet.", true);
+      return;
+    }
+
+    const {
+      data: { publicUrl },
+    } = adminClient.storage.from(supabaseConfig.storageBucket).getPublicUrl(filePath);
+
+    finalImage = publicUrl;
+  }
 
   const payload = {
     display_order: Number.isFinite(displayOrder) ? displayOrder : currentPhotos.length + 1,
@@ -599,13 +647,13 @@ async function addPhoto() {
     title: photoTitleInput.value.trim() || "Nieuwe foto",
     copy: photoCopyInput.value.trim() || "",
     note: photoNoteInput.value.trim() || "",
-    image: photoImageInput.value.trim(),
+    image: finalImage,
     comment_id: photoCommentIdInput.value.trim() || `foto-${crypto.randomUUID().slice(0, 8)}`,
     active: true,
   };
 
   if (!payload.image) {
-    setAdminStatus("Vul eerst een afbeelding URL of assetpad in.", true);
+    setAdminStatus("Kies eerst een foto of vul een URL in.", true);
     return;
   }
 
@@ -623,6 +671,10 @@ async function addPhoto() {
   photoCopyInput.value = "";
   photoNoteInput.value = "";
   photoImageInput.value = "";
+  if (photoFileInput) {
+    photoFileInput.value = "";
+  }
+  setSelectedPhotoFile(null);
 
   setAdminStatus("Foto toegevoegd.");
   await loadAdminData();
@@ -842,6 +894,47 @@ if (refreshAdminButton) {
 
 if (logoutAdminButton) {
   logoutAdminButton.addEventListener("click", logoutAdmin);
+}
+
+if (photoFileInput) {
+  photoFileInput.addEventListener("change", () => {
+    setSelectedPhotoFile(photoFileInput.files?.[0] || null);
+  });
+}
+
+if (photoDropzone) {
+  photoDropzone.addEventListener("dragenter", (event) => {
+    event.preventDefault();
+    photoDropzone.dataset.dragging = "true";
+  });
+
+  photoDropzone.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    photoDropzone.dataset.dragging = "true";
+  });
+
+  photoDropzone.addEventListener("dragleave", (event) => {
+    if (event.target === photoDropzone) {
+      photoDropzone.dataset.dragging = "false";
+    }
+  });
+
+  photoDropzone.addEventListener("drop", (event) => {
+    event.preventDefault();
+    photoDropzone.dataset.dragging = "false";
+
+    const file = event.dataTransfer?.files?.[0] || null;
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setAdminStatus("Gebruik alleen een afbeelding.", true);
+      return;
+    }
+
+    setSelectedPhotoFile(file);
+  });
 }
 
 if (pageMode === "admin") {

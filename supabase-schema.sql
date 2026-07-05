@@ -1,4 +1,4 @@
-create extension if not exists pgcrypto;
+create extension if not exists pgcrypto with schema extensions;
 
 create table if not exists public.site_settings (
   key text primary key,
@@ -104,7 +104,7 @@ as $$
       select 1
       from public.admin_users
       where username = public.current_admin_username()
-        and password_hash = crypt(public.current_admin_password(), password_hash)
+        and password_hash = extensions.crypt(public.current_admin_password(), password_hash)
     );
 $$;
 
@@ -123,7 +123,7 @@ begin
   from public.admin_users
   where username = p_username;
 
-  if stored_hash is null or stored_hash <> crypt(p_password, stored_hash) then
+  if stored_hash is null or stored_hash <> extensions.crypt(p_password, stored_hash) then
     raise exception 'invalid login';
   end if;
 
@@ -241,9 +241,55 @@ to anon, authenticated
 using (false);
 
 insert into public.admin_users (username, password_hash)
-values ('timvanoene', crypt('Pl@yst@tion', gen_salt('bf')))
+values ('timvanoene', extensions.crypt('Pl@yst@tion', extensions.gen_salt('bf')))
 on conflict (username) do update
 set password_hash = excluded.password_hash;
+
+insert into storage.buckets (id, name, public)
+values ('vakantie-uploads', 'vakantie-uploads', true)
+on conflict (id) do update
+set public = excluded.public;
+
+drop policy if exists "vakantie uploads publiek lezen" on storage.objects;
+create policy "vakantie uploads publiek lezen"
+on storage.objects
+for select
+to anon, authenticated
+using (bucket_id = 'vakantie-uploads');
+
+drop policy if exists "admin uploadt vakantie fotos" on storage.objects;
+create policy "admin uploadt vakantie fotos"
+on storage.objects
+for insert
+to anon, authenticated
+with check (
+  bucket_id = 'vakantie-uploads'
+  and public.is_admin()
+);
+
+drop policy if exists "admin wijzigt vakantie fotos" on storage.objects;
+create policy "admin wijzigt vakantie fotos"
+on storage.objects
+for update
+to anon, authenticated
+using (
+  bucket_id = 'vakantie-uploads'
+  and public.is_admin()
+)
+with check (
+  bucket_id = 'vakantie-uploads'
+  and public.is_admin()
+);
+
+drop policy if exists "admin verwijdert vakantie fotos" on storage.objects;
+create policy "admin verwijdert vakantie fotos"
+on storage.objects
+for delete
+to anon, authenticated
+using (
+  bucket_id = 'vakantie-uploads'
+  and public.is_admin()
+);
 
 insert into public.site_settings (key, value)
 values (
