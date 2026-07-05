@@ -1,6 +1,7 @@
+const pageMode = document.body.dataset.page === "admin" ? "admin" : "public";
+const supabaseLib = window.supabase;
+
 const photoFeed = document.querySelector("#photoFeed");
-const publicView = document.querySelector("#publicView");
-const adminView = document.querySelector("#adminView");
 const heroKickerEl = document.querySelector(".hero-kicker");
 const heroTitleEl = document.querySelector(".hero h1");
 const heroCopyEl = document.querySelector(".hero-copy");
@@ -16,6 +17,7 @@ const adminCommentList = document.querySelector("#adminCommentList");
 const visitCountEl = document.querySelector("#visitCount");
 const commentCountEl = document.querySelector("#commentCount");
 const photoCountEl = document.querySelector("#photoCount");
+const logoutAdminButton = document.querySelector("#logoutAdminButton");
 
 const heroKickerInput = document.querySelector("#heroKickerInput");
 const heroTitleInput = document.querySelector("#heroTitleInput");
@@ -42,6 +44,8 @@ const supabaseConfig = {
   settingsTable: "site_settings",
   visitsTable: "page_visits",
 };
+
+const adminCredsStorageKey = "vakantie_admin_creds_v2";
 
 const defaultHero = {
   kicker: "Vakantie-thijn",
@@ -116,39 +120,86 @@ const defaultMemories = [
   },
 ];
 
-const publicClient = window.supabase.createClient(
+if (!supabaseLib?.createClient) {
+  if (pageMode === "admin" && adminLoginStatus) {
+    adminLoginStatus.hidden = false;
+    adminLoginStatus.dataset.error = "true";
+    adminLoginStatus.textContent = "Supabase laadt niet goed. Vernieuw de pagina.";
+  }
+  throw new Error("Supabase library ontbreekt.");
+}
+
+const publicClient = supabaseLib.createClient(
   supabaseConfig.url,
   supabaseConfig.anonKey
 );
 
 let currentHero = { ...defaultHero };
 let currentPhotos = defaultMemories.map((memory) => ({ ...memory }));
-let adminToken = sessionStorage.getItem("vakantie_admin_token") || "";
-let adminClient = createAdminClient(adminToken);
+let adminCreds = readAdminCreds();
+let adminClient = createAdminClient(adminCreds);
 
-function createAdminClient(token) {
-  return window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey, {
-    global: {
-      headers: token ? { "x-admin-token": token } : {},
-    },
+function readAdminCreds() {
+  try {
+    const raw = sessionStorage.getItem(adminCredsStorageKey);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeAdminCreds(creds) {
+  adminCreds = creds;
+  adminClient = createAdminClient(creds);
+
+  if (creds) {
+    sessionStorage.setItem(adminCredsStorageKey, JSON.stringify(creds));
+  } else {
+    sessionStorage.removeItem(adminCredsStorageKey);
+  }
+}
+
+function createAdminClient(creds) {
+  const headers = creds
+    ? {
+        "x-admin-username": creds.username,
+        "x-admin-password": creds.password,
+      }
+    : {};
+
+  return supabaseLib.createClient(supabaseConfig.url, supabaseConfig.anonKey, {
+    global: { headers },
   });
 }
 
 function setAdminStatus(message, isError = false) {
+  if (!adminStatus) {
+    return;
+  }
+
   adminStatus.hidden = false;
   adminStatus.textContent = message;
   adminStatus.dataset.error = isError ? "true" : "false";
 }
 
 function setLoginStatus(message, isError = false) {
+  if (!adminLoginStatus) {
+    return;
+  }
+
   adminLoginStatus.hidden = false;
   adminLoginStatus.textContent = message;
   adminLoginStatus.dataset.error = isError ? "true" : "false";
 }
 
 function hideStatuses() {
-  adminStatus.hidden = true;
-  adminLoginStatus.hidden = true;
+  if (adminStatus) {
+    adminStatus.hidden = true;
+  }
+
+  if (adminLoginStatus) {
+    adminLoginStatus.hidden = true;
+  }
 }
 
 function countWords(value) {
@@ -180,21 +231,43 @@ function escapeHtml(value) {
 
 function applyHero(hero) {
   currentHero = {
-    kicker: hero.kicker || defaultHero.kicker,
-    title: hero.title || defaultHero.title,
-    copy: hero.copy || defaultHero.copy,
-    button: hero.button || defaultHero.button,
+    kicker: hero?.kicker || defaultHero.kicker,
+    title: hero?.title || defaultHero.title,
+    copy: hero?.copy || defaultHero.copy,
+    button: hero?.button || defaultHero.button,
   };
 
-  heroKickerEl.textContent = currentHero.kicker;
-  heroTitleEl.textContent = currentHero.title;
-  heroCopyEl.textContent = currentHero.copy;
-  heroButtonEl.textContent = currentHero.button;
+  if (heroKickerEl) {
+    heroKickerEl.textContent = currentHero.kicker;
+  }
 
-  heroKickerInput.value = currentHero.kicker;
-  heroTitleInput.value = currentHero.title;
-  heroCopyInput.value = currentHero.copy;
-  heroButtonInput.value = currentHero.button;
+  if (heroTitleEl) {
+    heroTitleEl.textContent = currentHero.title;
+  }
+
+  if (heroCopyEl) {
+    heroCopyEl.textContent = currentHero.copy;
+  }
+
+  if (heroButtonEl) {
+    heroButtonEl.textContent = currentHero.button;
+  }
+
+  if (heroKickerInput) {
+    heroKickerInput.value = currentHero.kicker;
+  }
+
+  if (heroTitleInput) {
+    heroTitleInput.value = currentHero.title;
+  }
+
+  if (heroCopyInput) {
+    heroCopyInput.value = currentHero.copy;
+  }
+
+  if (heroButtonInput) {
+    heroButtonInput.value = currentHero.button;
+  }
 }
 
 function renderComments(list, comments, isAdmin = false) {
@@ -393,6 +466,10 @@ function createCommentSection(photo) {
 }
 
 function renderFeed() {
+  if (!photoFeed) {
+    return;
+  }
+
   photoFeed.innerHTML = "";
 
   currentPhotos.forEach((photo, index) => {
@@ -432,15 +509,7 @@ function renderFeed() {
     note.className = "card-note";
     note.textContent = photo.note;
 
-    card.append(
-      top,
-      photoWrap,
-      title,
-      copy,
-      note,
-      createCommentSection(photo)
-    );
-
+    card.append(top, photoWrap, title, copy, note, createCommentSection(photo));
     photoFeed.append(card);
   });
 }
@@ -557,10 +626,13 @@ async function addPhoto() {
 
   setAdminStatus("Foto toegevoegd.");
   await loadAdminData();
-  await loadPhotosFromSupabase();
 }
 
 function renderAdminPhotos() {
+  if (!adminPhotoList) {
+    return;
+  }
+
   adminPhotoList.innerHTML = "";
 
   if (!currentPhotos.length) {
@@ -597,7 +669,8 @@ function renderAdminPhotos() {
     saveButton.addEventListener("click", async () => {
       const next = {
         tag: card.querySelector('[data-field="tag"]').value.trim(),
-        display_order: Number(card.querySelector('[data-field="display_order"]').value) || photo.display_order,
+        display_order:
+          Number(card.querySelector('[data-field="display_order"]').value) || photo.display_order,
         title: card.querySelector('[data-field="title"]').value.trim(),
         comment_id: card.querySelector('[data-field="comment_id"]').value.trim(),
         copy: card.querySelector('[data-field="copy"]').value.trim(),
@@ -617,7 +690,6 @@ function renderAdminPhotos() {
 
       setAdminStatus("Foto opgeslagen.");
       await loadAdminData();
-      await loadPhotosFromSupabase();
     });
 
     const deleteButton = document.createElement("button");
@@ -637,7 +709,6 @@ function renderAdminPhotos() {
 
       setAdminStatus("Foto verwijderd.");
       await loadAdminData();
-      await loadPhotosFromSupabase();
     });
 
     actions.append(saveButton, deleteButton);
@@ -647,7 +718,7 @@ function renderAdminPhotos() {
 }
 
 async function loadAdminData() {
-  const [{ count: visitCount }, { count: commentsCount }, { count: photosCount }, commentsResult] =
+  const [{ count: visitCount, error: visitError }, { count: commentsCount, error: commentsError }, { count: photosCount, error: photosError }, commentsResult] =
     await Promise.all([
       adminClient
         .from(supabaseConfig.visitsTable)
@@ -666,10 +737,24 @@ async function loadAdminData() {
         .limit(50),
     ]);
 
-  visitCountEl.textContent = String(visitCount || 0);
-  commentCountEl.textContent = String(commentsCount || 0);
-  photoCountEl.textContent = String(photosCount || 0);
+  if (visitError || commentsError || photosError || commentsResult.error) {
+    throw new Error("admin data laden mislukt");
+  }
 
+  if (visitCountEl) {
+    visitCountEl.textContent = String(visitCount || 0);
+  }
+
+  if (commentCountEl) {
+    commentCountEl.textContent = String(commentsCount || 0);
+  }
+
+  if (photoCountEl) {
+    photoCountEl.textContent = String(photosCount || 0);
+  }
+
+  await loadHeroFromSupabase();
+  await loadPhotosFromSupabase();
   renderAdminPhotos();
   renderComments(adminCommentList, commentsResult.data || [], true);
 }
@@ -677,71 +762,90 @@ async function loadAdminData() {
 async function loginAdmin(username, password) {
   hideStatuses();
 
-  const { data, error } = await publicClient.rpc("admin_login", {
-    p_username: username,
-    p_password: password,
-  });
-
-  if (error || !data) {
-    setLoginStatus("Login lukte niet.", true);
+  if (!username || !password) {
+    setLoginStatus("Vul gebruikersnaam en wachtwoord in.", true);
     return;
   }
 
-  adminToken = data;
-  sessionStorage.setItem("vakantie_admin_token", adminToken);
-  adminClient = createAdminClient(adminToken);
+  writeAdminCreds({ username, password });
 
-  adminLoginCard.hidden = true;
-  adminDashboard.hidden = false;
-
-  setAdminStatus("Admin ingelogd.");
-  await loadAdminData();
+  try {
+    await loadAdminData();
+    adminLoginCard.hidden = true;
+    adminDashboard.hidden = false;
+    setAdminStatus("Admin ingelogd.");
+  } catch {
+    writeAdminCreds(null);
+    setLoginStatus("Login lukte niet.", true);
+  }
 }
 
-function handleRoute() {
-  const isAdminRoute = window.location.hash === "#admin";
-  publicView.hidden = isAdminRoute;
-  adminView.hidden = !isAdminRoute;
+function logoutAdmin() {
+  writeAdminCreds(null);
+  adminDashboard.hidden = true;
+  adminLoginCard.hidden = false;
+  hideStatuses();
 }
 
-async function bootstrap() {
-  handleRoute();
+async function bootstrapPublicPage() {
   applyHero(defaultHero);
   renderFeed();
-
   await Promise.all([loadHeroFromSupabase(), loadPhotosFromSupabase(), registerVisit()]);
+}
 
-  if (window.location.hash === "#admin" && adminToken) {
-    adminLoginCard.hidden = true;
-    adminDashboard.hidden = false;
-    await loadAdminData();
+async function bootstrapAdminPage() {
+  applyHero(defaultHero);
+
+  if (adminCreds) {
+    try {
+      adminLoginCard.hidden = true;
+      adminDashboard.hidden = false;
+      await loadAdminData();
+      return;
+    } catch {
+      writeAdminCreds(null);
+      adminDashboard.hidden = true;
+      adminLoginCard.hidden = false;
+      setLoginStatus("Log opnieuw in.", true);
+    }
   }
 }
 
-adminLoginForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  await loginAdmin(
-    document.querySelector("#adminUsername").value.trim(),
-    document.querySelector("#adminPassword").value
-  );
-});
+if (adminLoginForm) {
+  adminLoginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await loginAdmin(
+      document.querySelector("#adminUsername").value.trim(),
+      document.querySelector("#adminPassword").value
+    );
+  });
+}
 
-saveHeroButton.addEventListener("click", saveHero);
-addPhotoButton.addEventListener("click", addPhoto);
-refreshAdminButton.addEventListener("click", async () => {
-  await loadHeroFromSupabase();
-  await loadPhotosFromSupabase();
-  await loadAdminData();
-  setAdminStatus("Admin ververst.");
-});
+if (saveHeroButton) {
+  saveHeroButton.addEventListener("click", saveHero);
+}
 
-window.addEventListener("hashchange", async () => {
-  handleRoute();
-  if (window.location.hash === "#admin" && adminToken) {
-    adminLoginCard.hidden = true;
-    adminDashboard.hidden = false;
-    await loadAdminData();
-  }
-});
+if (addPhotoButton) {
+  addPhotoButton.addEventListener("click", addPhoto);
+}
 
-bootstrap();
+if (refreshAdminButton) {
+  refreshAdminButton.addEventListener("click", async () => {
+    try {
+      await loadAdminData();
+      setAdminStatus("Admin ververst.");
+    } catch {
+      setAdminStatus("Verversen lukte niet.", true);
+    }
+  });
+}
+
+if (logoutAdminButton) {
+  logoutAdminButton.addEventListener("click", logoutAdmin);
+}
+
+if (pageMode === "admin") {
+  bootstrapAdminPage();
+} else {
+  bootstrapPublicPage();
+}

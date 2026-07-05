@@ -60,6 +60,32 @@ as $$
   );
 $$;
 
+create or replace function public.current_admin_username()
+returns text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    nullif(current_setting('request.headers', true), '')::jsonb ->> 'x-admin-username',
+    ''
+  );
+$$;
+
+create or replace function public.current_admin_password()
+returns text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    nullif(current_setting('request.headers', true), '')::jsonb ->> 'x-admin-password',
+    ''
+  );
+$$;
+
 create or replace function public.is_admin()
 returns boolean
 language sql
@@ -67,12 +93,19 @@ stable
 security definer
 set search_path = public
 as $$
-  select exists (
-    select 1
-    from public.admin_sessions
-    where token = public.current_admin_token()
-      and expires_at > now()
-  );
+  select
+    exists (
+      select 1
+      from public.admin_sessions
+      where token = public.current_admin_token()
+        and expires_at > now()
+    )
+    or exists (
+      select 1
+      from public.admin_users
+      where username = public.current_admin_username()
+        and password_hash = crypt(public.current_admin_password(), password_hash)
+    );
 $$;
 
 create or replace function public.admin_login(p_username text, p_password text)
@@ -105,6 +138,12 @@ $$;
 
 revoke all on function public.current_admin_token() from public;
 grant execute on function public.current_admin_token() to anon, authenticated;
+
+revoke all on function public.current_admin_username() from public;
+grant execute on function public.current_admin_username() to anon, authenticated;
+
+revoke all on function public.current_admin_password() from public;
+grant execute on function public.current_admin_password() to anon, authenticated;
 
 revoke all on function public.is_admin() from public;
 grant execute on function public.is_admin() to anon, authenticated;
