@@ -18,6 +18,7 @@
   </head>
   <body>
     <main class="app-shell">
+      <section id="publicView" class="public-view">
       <section class="hero">
         <p class="hero-kicker">Vakantie-thijn</p>
         <h1>Scroll en oordeel later.</h1>
@@ -25,11 +26,96 @@
           Zwarte achtergrond, domme foto's, en straks open comments onder elke
           foto zonder gedoe met accounts.
         </p>
-        <a class="hero-jump" href="#feed">begin</a>
+        <div class="hero-actions">
+          <a class="hero-jump" href="#feed">begin</a>
+          <a class="hero-admin-link" href="#admin">admin</a>
+        </div>
       </section>
 
       <section id="feed" class="feed">
         <div id="photoFeed" class="photo-feed"></div>
+      </section>
+      </section>
+
+      <section id="adminView" class="admin-view" hidden>
+        <div class="admin-topbar">
+          <div>
+            <p class="admin-kicker">Beheer</p>
+            <h2 class="admin-title">Vakantie-thijn admin</h2>
+          </div>
+          <a class="admin-back" href="#">terug</a>
+        </div>
+
+        <section id="adminLoginCard" class="admin-card">
+          <h3 class="admin-section-title">Inloggen</h3>
+          <form id="adminLoginForm" class="admin-form">
+            <input id="adminUsername" class="admin-input" type="text" placeholder="Gebruikersnaam" autocomplete="username" />
+            <input id="adminPassword" class="admin-input" type="password" placeholder="Wachtwoord" autocomplete="current-password" />
+            <button class="admin-button" type="submit">Open admin</button>
+          </form>
+          <p id="adminLoginStatus" class="admin-status" hidden></p>
+        </section>
+
+        <section id="adminDashboard" hidden>
+          <div class="admin-stats-grid">
+            <article class="admin-stat-card">
+              <span class="admin-stat-label">Bezoekers</span>
+              <strong id="visitCount" class="admin-stat-value">-</strong>
+            </article>
+            <article class="admin-stat-card">
+              <span class="admin-stat-label">Comments</span>
+              <strong id="commentCount" class="admin-stat-value">-</strong>
+            </article>
+            <article class="admin-stat-card">
+              <span class="admin-stat-label">Foto's</span>
+              <strong id="photoCount" class="admin-stat-value">-</strong>
+            </article>
+          </div>
+
+          <section class="admin-card">
+            <div class="admin-card-head">
+              <h3 class="admin-section-title">Hero tekst</h3>
+              <button id="saveHeroButton" class="admin-button secondary" type="button">Opslaan</button>
+            </div>
+            <div class="admin-form">
+              <input id="heroKickerInput" class="admin-input" type="text" placeholder="Kicker" />
+              <input id="heroTitleInput" class="admin-input" type="text" placeholder="Titel" />
+              <textarea id="heroCopyInput" class="admin-textarea" rows="3" placeholder="Tekst"></textarea>
+              <input id="heroButtonInput" class="admin-input" type="text" placeholder="Knoptekst" />
+            </div>
+          </section>
+
+          <section class="admin-card">
+            <div class="admin-card-head">
+              <h3 class="admin-section-title">Foto toevoegen</h3>
+              <button id="addPhotoButton" class="admin-button secondary" type="button">Toevoegen</button>
+            </div>
+            <div class="admin-form two-col">
+              <input id="photoTagInput" class="admin-input" type="text" placeholder="Tag bv 12:45" />
+              <input id="photoOrderInput" class="admin-input" type="number" min="1" placeholder="Volgorde" />
+              <input id="photoTitleInput" class="admin-input" type="text" placeholder="Titel" />
+              <input id="photoCommentIdInput" class="admin-input" type="text" placeholder="Comment id bv foto-8" />
+              <textarea id="photoCopyInput" class="admin-textarea" rows="3" placeholder="Tekst onder foto"></textarea>
+              <textarea id="photoNoteInput" class="admin-textarea" rows="3" placeholder="Notitie"></textarea>
+              <input id="photoImageInput" class="admin-input full" type="text" placeholder="Afbeelding URL of assets/pad" />
+            </div>
+          </section>
+
+          <section class="admin-card">
+            <div class="admin-card-head">
+              <h3 class="admin-section-title">Foto's beheren</h3>
+              <button id="refreshAdminButton" class="admin-button secondary" type="button">Verversen</button>
+            </div>
+            <div id="adminPhotoList" class="admin-stack"></div>
+          </section>
+
+          <section class="admin-card">
+            <h3 class="admin-section-title">Comments beheren</h3>
+            <div id="adminCommentList" class="admin-stack"></div>
+          </section>
+
+          <p id="adminStatus" class="admin-status" hidden></p>
+        </section>
       </section>
     </main>
 

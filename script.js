@@ -1,19 +1,64 @@
 const photoFeed = document.querySelector("#photoFeed");
+const publicView = document.querySelector("#publicView");
+const adminView = document.querySelector("#adminView");
+const heroKickerEl = document.querySelector(".hero-kicker");
+const heroTitleEl = document.querySelector(".hero h1");
+const heroCopyEl = document.querySelector(".hero-copy");
+const heroButtonEl = document.querySelector(".hero-jump");
+
+const adminLoginCard = document.querySelector("#adminLoginCard");
+const adminDashboard = document.querySelector("#adminDashboard");
+const adminLoginForm = document.querySelector("#adminLoginForm");
+const adminLoginStatus = document.querySelector("#adminLoginStatus");
+const adminStatus = document.querySelector("#adminStatus");
+const adminPhotoList = document.querySelector("#adminPhotoList");
+const adminCommentList = document.querySelector("#adminCommentList");
+const visitCountEl = document.querySelector("#visitCount");
+const commentCountEl = document.querySelector("#commentCount");
+const photoCountEl = document.querySelector("#photoCount");
+
+const heroKickerInput = document.querySelector("#heroKickerInput");
+const heroTitleInput = document.querySelector("#heroTitleInput");
+const heroCopyInput = document.querySelector("#heroCopyInput");
+const heroButtonInput = document.querySelector("#heroButtonInput");
+
+const photoTagInput = document.querySelector("#photoTagInput");
+const photoOrderInput = document.querySelector("#photoOrderInput");
+const photoTitleInput = document.querySelector("#photoTitleInput");
+const photoCommentIdInput = document.querySelector("#photoCommentIdInput");
+const photoCopyInput = document.querySelector("#photoCopyInput");
+const photoNoteInput = document.querySelector("#photoNoteInput");
+const photoImageInput = document.querySelector("#photoImageInput");
+
+const saveHeroButton = document.querySelector("#saveHeroButton");
+const addPhotoButton = document.querySelector("#addPhotoButton");
+const refreshAdminButton = document.querySelector("#refreshAdminButton");
 
 const supabaseConfig = {
   url: "https://lardnnecoesiazbjwilp.supabase.co",
   anonKey: "sb_publishable_FNqzAtTU_0Q7Nzp44CV5-w_Me1xOQ85",
-  table: "photo_comments",
+  commentsTable: "photo_comments",
+  photosTable: "photo_entries",
+  settingsTable: "site_settings",
+  visitsTable: "page_visits",
 };
 
-const memories = [
+const defaultHero = {
+  kicker: "Vakantie-thijn",
+  title: "Scroll en oordeel later.",
+  copy: "Zwarte achtergrond, domme foto's, en straks open comments onder elke foto zonder gedoe met accounts.",
+  button: "begin",
+};
+
+const defaultMemories = [
   {
     tag: "02:17",
     title: "Er zijn foto's waar je geen uitleg bij wilt geven en dit is er een van",
     copy: "Je opent de pagina, scrollt omlaag en dan krijg je dit gewoon vol in beeld. Precies de juiste energie.",
     note: "Deze staat nu op plek 1.",
     image: "assets/chatgpt-image-2026-07-02-191533.png",
-    commentId: "foto-1",
+    comment_id: "foto-1",
+    display_order: 1,
   },
   {
     tag: "13:10",
@@ -21,7 +66,8 @@ const memories = [
     copy: "Je scrolt nog geen twee seconden en dan staat dit er al pontificaal tussen.",
     note: "Afbeelding 2 is nu vervangen door je nieuwe versie.",
     image: "assets/image-2-replacement.png",
-    commentId: "foto-2",
+    comment_id: "foto-2",
+    display_order: 2,
   },
   {
     tag: "16:28",
@@ -29,7 +75,8 @@ const memories = [
     copy: "Je hoeft hier eigenlijk niets meer aan uit te leggen, de foto doet het zware werk zelf al.",
     note: "De oude derde afbeelding is vervangen door je nieuwe foto.",
     image: "assets/image-3-replacement.png",
-    commentId: "foto-3",
+    comment_id: "foto-3",
+    display_order: 3,
   },
   {
     tag: "19:54",
@@ -37,7 +84,8 @@ const memories = [
     copy: "Dit is precies zo'n foto die je niet uitlegt maar gewoon laat staan voor maximaal effect.",
     note: "De oude vierde afbeelding is vervangen door je nieuwe versie.",
     image: "assets/image-4-replacement.png",
-    commentId: "foto-4",
+    comment_id: "foto-4",
+    display_order: 4,
   },
   {
     tag: "23:43",
@@ -45,7 +93,8 @@ const memories = [
     copy: "Je denkt dat het niet gekker wordt en dan scroll je precies hiernaartoe.",
     note: "Alleen plek 5 is aangepast zoals je vroeg.",
     image: "assets/image-5-replacement.png",
-    commentId: "foto-5",
+    comment_id: "foto-5",
+    display_order: 5,
   },
   {
     tag: "08:11",
@@ -53,7 +102,8 @@ const memories = [
     copy: "Dit is gewoon zo'n foto die schreeuwt om onderaan een zwarte roast-scroll te eindigen.",
     note: "Nieuwe echte foto toegevoegd als slotstuk.",
     image: "assets/IMG_4568.JPG",
-    commentId: "foto-6",
+    comment_id: "foto-6",
+    display_order: 6,
   },
   {
     tag: "11:47",
@@ -61,14 +111,45 @@ const memories = [
     copy: "Dit is precies het type beeld dat steeds erger wordt naarmate je er langer naar kijkt.",
     note: "Nieuw toegevoegd als extra kaart onderaan de feed.",
     image: "assets/image-7-added.png",
-    commentId: "foto-7",
+    comment_id: "foto-7",
+    display_order: 7,
   },
 ];
 
-const supabaseReady = Boolean(supabaseConfig.url && supabaseConfig.anonKey);
-const supabaseClient = supabaseReady
-  ? window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey)
-  : null;
+const publicClient = window.supabase.createClient(
+  supabaseConfig.url,
+  supabaseConfig.anonKey
+);
+
+let currentHero = { ...defaultHero };
+let currentPhotos = defaultMemories.map((memory) => ({ ...memory }));
+let adminToken = sessionStorage.getItem("vakantie_admin_token") || "";
+let adminClient = createAdminClient(adminToken);
+
+function createAdminClient(token) {
+  return window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey, {
+    global: {
+      headers: token ? { "x-admin-token": token } : {},
+    },
+  });
+}
+
+function setAdminStatus(message, isError = false) {
+  adminStatus.hidden = false;
+  adminStatus.textContent = message;
+  adminStatus.dataset.error = isError ? "true" : "false";
+}
+
+function setLoginStatus(message, isError = false) {
+  adminLoginStatus.hidden = false;
+  adminLoginStatus.textContent = message;
+  adminLoginStatus.dataset.error = isError ? "true" : "false";
+}
+
+function hideStatuses() {
+  adminStatus.hidden = true;
+  adminLoginStatus.hidden = true;
+}
 
 function countWords(value) {
   return value.trim() ? value.trim().split(/\s+/).length : 0;
@@ -89,67 +170,97 @@ function formatTime(value) {
   }).format(date);
 }
 
-function createHelpMessage() {
-  const help = document.createElement("p");
-  help.className = "comments-help";
-  help.textContent =
-    "Comments staan klaar, maar ik moet nog even jouw Supabase URL en anon key invullen.";
-
-  return help;
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
 
-function createStatusLine() {
-  const status = document.createElement("p");
-  status.className = "comments-status";
-  status.hidden = true;
-  return status;
+function applyHero(hero) {
+  currentHero = {
+    kicker: hero.kicker || defaultHero.kicker,
+    title: hero.title || defaultHero.title,
+    copy: hero.copy || defaultHero.copy,
+    button: hero.button || defaultHero.button,
+  };
+
+  heroKickerEl.textContent = currentHero.kicker;
+  heroTitleEl.textContent = currentHero.title;
+  heroCopyEl.textContent = currentHero.copy;
+  heroButtonEl.textContent = currentHero.button;
+
+  heroKickerInput.value = currentHero.kicker;
+  heroTitleInput.value = currentHero.title;
+  heroCopyInput.value = currentHero.copy;
+  heroButtonInput.value = currentHero.button;
 }
 
-function renderComments(list, comments) {
+function renderComments(list, comments, isAdmin = false) {
   list.innerHTML = "";
 
   if (!comments.length) {
     const empty = document.createElement("p");
-    empty.className = "comments-empty";
-    empty.textContent = "Nog geen comments. Trap jij hem af.";
+    empty.className = isAdmin ? "admin-empty" : "comments-empty";
+    empty.textContent = isAdmin
+      ? "Nog geen comments om te beheren."
+      : "Nog geen comments. Trap jij hem af.";
     list.append(empty);
     return;
   }
 
   comments.forEach((comment) => {
     const item = document.createElement("article");
-    item.className = "comment-item";
+    item.className = isAdmin ? "admin-comment-card" : "comment-item";
 
     const meta = document.createElement("div");
-    meta.className = "comment-meta";
+    meta.className = isAdmin ? "admin-inline-head" : "comment-meta";
 
     const author = document.createElement("strong");
-    author.className = "comment-author";
+    author.className = isAdmin ? "admin-comment-author" : "comment-author";
     author.textContent = comment.author || "anoniem";
 
     const time = document.createElement("span");
-    time.className = "comment-time";
+    time.className = isAdmin ? "admin-comment-time" : "comment-time";
     time.textContent = formatTime(comment.created_at);
 
     meta.append(author, time);
 
     const body = document.createElement("p");
-    body.className = "comment-body";
+    body.className = isAdmin ? "admin-comment-body" : "comment-body";
     body.textContent = comment.body;
 
     item.append(meta, body);
+
+    if (isAdmin) {
+      const extra = document.createElement("div");
+      extra.className = "admin-comment-extra";
+      extra.textContent = comment.photo_id;
+
+      const deleteButton = document.createElement("button");
+      deleteButton.className = "admin-button danger small";
+      deleteButton.type = "button";
+      deleteButton.textContent = "Verwijderen";
+      deleteButton.addEventListener("click", async () => {
+        await deleteComment(comment.id);
+      });
+
+      item.append(extra, deleteButton);
+    }
+
     list.append(item);
   });
 }
 
-async function loadComments(memory, list, status) {
+async function loadComments(commentId, list, status) {
   status.hidden = true;
   status.textContent = "";
 
-  const { data, error } = await supabaseClient
-    .from(supabaseConfig.table)
+  const { data, error } = await publicClient
+    .from(supabaseConfig.commentsTable)
     .select("id, author, body, created_at")
-    .eq("photo_id", memory.commentId)
+    .eq("photo_id", commentId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -161,7 +272,7 @@ async function loadComments(memory, list, status) {
   renderComments(list, data || []);
 }
 
-async function submitComment(memory, nameInput, textInput, list, status, form, counter) {
+async function submitComment(commentId, nameInput, textInput, list, status, form, counter) {
   const nameValue = nameInput.value.trim();
   const textValue = textInput.value.trim();
   const words = countWords(textValue);
@@ -182,13 +293,11 @@ async function submitComment(memory, nameInput, textInput, list, status, form, c
   status.hidden = false;
   status.textContent = "Bezig met posten...";
 
-  const payload = {
-    photo_id: memory.commentId,
+  const { error } = await publicClient.from(supabaseConfig.commentsTable).insert({
+    photo_id: commentId,
     author: nameValue || "anoniem",
     body: textValue,
-  };
-
-  const { error } = await supabaseClient.from(supabaseConfig.table).insert(payload);
+  });
 
   form.classList.remove("is-submitting");
 
@@ -200,11 +309,12 @@ async function submitComment(memory, nameInput, textInput, list, status, form, c
   nameInput.value = "";
   textInput.value = "";
   counter.textContent = "0 / 50 woorden";
+  counter.dataset.over = "false";
   status.textContent = "Comment geplaatst.";
-  await loadComments(memory, list, status);
+  await loadComments(commentId, list, status);
 }
 
-function createCommentSection(memory) {
+function createCommentSection(photo) {
   const comments = document.createElement("details");
   comments.className = "comments-panel";
 
@@ -214,13 +324,6 @@ function createCommentSection(memory) {
 
   const body = document.createElement("div");
   body.className = "comments-body";
-
-  comments.append(summary, body);
-
-  if (!supabaseReady) {
-    body.append(createHelpMessage());
-    return comments;
-  }
 
   const rules = document.createElement("p");
   rules.className = "comments-rules";
@@ -232,13 +335,11 @@ function createCommentSection(memory) {
   const nameInput = document.createElement("input");
   nameInput.className = "comment-input";
   nameInput.type = "text";
-  nameInput.name = `name-${memory.commentId}`;
   nameInput.maxLength = 32;
   nameInput.placeholder = "Naam (optioneel)";
 
   const textInput = document.createElement("textarea");
   textInput.className = "comment-textarea";
-  textInput.name = `comment-${memory.commentId}`;
   textInput.rows = 3;
   textInput.maxLength = 320;
   textInput.placeholder = "Zet hier je comment neer";
@@ -248,6 +349,7 @@ function createCommentSection(memory) {
 
   const counter = document.createElement("span");
   counter.className = "comment-counter";
+  counter.dataset.over = "false";
   counter.textContent = "0 / 50 woorden";
 
   const submitButton = document.createElement("button");
@@ -255,13 +357,15 @@ function createCommentSection(memory) {
   submitButton.type = "submit";
   submitButton.textContent = "Plaatsen";
 
-  formFooter.append(counter, submitButton);
-  form.append(nameInput, textInput, formFooter);
-
-  const status = createStatusLine();
+  const status = document.createElement("p");
+  status.className = "comments-status";
+  status.hidden = true;
 
   const list = document.createElement("div");
   list.className = "comments-list";
+
+  formFooter.append(counter, submitButton);
+  form.append(nameInput, textInput, formFooter);
 
   textInput.addEventListener("input", () => {
     const words = countWords(textInput.value);
@@ -271,7 +375,7 @@ function createCommentSection(memory) {
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    await submitComment(memory, nameInput, textInput, list, status, form, counter);
+    await submitComment(photo.comment_id, nameInput, textInput, list, status, form, counter);
   });
 
   comments.addEventListener("toggle", async () => {
@@ -279,18 +383,19 @@ function createCommentSection(memory) {
       return;
     }
 
-    await loadComments(memory, list, status);
+    await loadComments(photo.comment_id, list, status);
     comments.dataset.loaded = "true";
   });
 
   body.append(rules, form, status, list);
+  comments.append(summary, body);
   return comments;
 }
 
 function renderFeed() {
   photoFeed.innerHTML = "";
 
-  memories.forEach((memory, index) => {
+  currentPhotos.forEach((photo, index) => {
     const card = document.createElement("article");
     card.className = "memory-card";
 
@@ -299,7 +404,7 @@ function renderFeed() {
 
     const tag = document.createElement("span");
     tag.className = "tag";
-    tag.textContent = memory.tag;
+    tag.textContent = photo.tag;
 
     const counter = document.createElement("span");
     counter.className = "counter";
@@ -311,27 +416,332 @@ function renderFeed() {
     photoWrap.className = "photo-wrap";
 
     const image = document.createElement("img");
-    image.src = memory.image;
-    image.alt = memory.title;
+    image.src = photo.image;
+    image.alt = photo.title;
     photoWrap.append(image);
 
     const title = document.createElement("h3");
     title.className = "card-title";
-    title.textContent = memory.title;
+    title.textContent = photo.title;
 
     const copy = document.createElement("p");
     copy.className = "card-copy";
-    copy.textContent = memory.copy;
+    copy.textContent = photo.copy;
 
     const note = document.createElement("div");
     note.className = "card-note";
-    note.textContent = memory.note;
+    note.textContent = photo.note;
 
-    const comments = createCommentSection(memory);
+    card.append(
+      top,
+      photoWrap,
+      title,
+      copy,
+      note,
+      createCommentSection(photo)
+    );
 
-    card.append(top, photoWrap, title, copy, note, comments);
     photoFeed.append(card);
   });
 }
 
-renderFeed();
+async function loadHeroFromSupabase() {
+  const { data } = await publicClient
+    .from(supabaseConfig.settingsTable)
+    .select("value")
+    .eq("key", "hero")
+    .maybeSingle();
+
+  applyHero(data?.value || defaultHero);
+}
+
+async function loadPhotosFromSupabase() {
+  const { data } = await publicClient
+    .from(supabaseConfig.photosTable)
+    .select("id, display_order, tag, title, copy, note, image, comment_id, active")
+    .eq("active", true)
+    .order("display_order", { ascending: true });
+
+  currentPhotos =
+    data && data.length
+      ? data
+      : defaultMemories.map((memory) => ({ ...memory }));
+
+  renderFeed();
+}
+
+async function registerVisit() {
+  const sessionKey = "vakantie_visit_sent_v2";
+
+  if (sessionStorage.getItem(sessionKey)) {
+    return;
+  }
+
+  sessionStorage.setItem(sessionKey, "1");
+
+  await publicClient.from(supabaseConfig.visitsTable).insert({
+    session_id: crypto.randomUUID(),
+    path: window.location.pathname,
+  });
+}
+
+async function deleteComment(id) {
+  const { error } = await adminClient
+    .from(supabaseConfig.commentsTable)
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    setAdminStatus("Comment verwijderen lukte niet.", true);
+    return;
+  }
+
+  setAdminStatus("Comment verwijderd.");
+  await loadAdminData();
+}
+
+async function saveHero() {
+  const payload = {
+    kicker: heroKickerInput.value.trim() || defaultHero.kicker,
+    title: heroTitleInput.value.trim() || defaultHero.title,
+    copy: heroCopyInput.value.trim() || defaultHero.copy,
+    button: heroButtonInput.value.trim() || defaultHero.button,
+  };
+
+  const { error } = await adminClient
+    .from(supabaseConfig.settingsTable)
+    .upsert({ key: "hero", value: payload }, { onConflict: "key" });
+
+  if (error) {
+    setAdminStatus("Hero opslaan lukte niet.", true);
+    return;
+  }
+
+  applyHero(payload);
+  setAdminStatus("Hero opgeslagen.");
+}
+
+async function addPhoto() {
+  const displayOrder = Number(photoOrderInput.value);
+
+  const payload = {
+    display_order: Number.isFinite(displayOrder) ? displayOrder : currentPhotos.length + 1,
+    tag: photoTagInput.value.trim() || "00:00",
+    title: photoTitleInput.value.trim() || "Nieuwe foto",
+    copy: photoCopyInput.value.trim() || "",
+    note: photoNoteInput.value.trim() || "",
+    image: photoImageInput.value.trim(),
+    comment_id: photoCommentIdInput.value.trim() || `foto-${crypto.randomUUID().slice(0, 8)}`,
+    active: true,
+  };
+
+  if (!payload.image) {
+    setAdminStatus("Vul eerst een afbeelding URL of assetpad in.", true);
+    return;
+  }
+
+  const { error } = await adminClient.from(supabaseConfig.photosTable).insert(payload);
+
+  if (error) {
+    setAdminStatus("Foto toevoegen lukte niet.", true);
+    return;
+  }
+
+  photoTagInput.value = "";
+  photoOrderInput.value = "";
+  photoTitleInput.value = "";
+  photoCommentIdInput.value = "";
+  photoCopyInput.value = "";
+  photoNoteInput.value = "";
+  photoImageInput.value = "";
+
+  setAdminStatus("Foto toegevoegd.");
+  await loadAdminData();
+  await loadPhotosFromSupabase();
+}
+
+function renderAdminPhotos() {
+  adminPhotoList.innerHTML = "";
+
+  if (!currentPhotos.length) {
+    const empty = document.createElement("p");
+    empty.className = "admin-empty";
+    empty.textContent = "Nog geen foto's om te beheren.";
+    adminPhotoList.append(empty);
+    return;
+  }
+
+  currentPhotos.forEach((photo) => {
+    const card = document.createElement("article");
+    card.className = "admin-photo-card";
+
+    card.innerHTML = `
+      <div class="admin-form two-col">
+        <input class="admin-input" data-field="tag" value="${escapeHtml(photo.tag)}" />
+        <input class="admin-input" data-field="display_order" type="number" value="${escapeHtml(photo.display_order)}" />
+        <input class="admin-input" data-field="title" value="${escapeHtml(photo.title)}" />
+        <input class="admin-input" data-field="comment_id" value="${escapeHtml(photo.comment_id)}" />
+        <textarea class="admin-textarea" data-field="copy" rows="3">${escapeHtml(photo.copy)}</textarea>
+        <textarea class="admin-textarea" data-field="note" rows="3">${escapeHtml(photo.note)}</textarea>
+        <input class="admin-input full" data-field="image" value="${escapeHtml(photo.image)}" />
+      </div>
+    `;
+
+    const actions = document.createElement("div");
+    actions.className = "admin-card-actions";
+
+    const saveButton = document.createElement("button");
+    saveButton.className = "admin-button secondary small";
+    saveButton.type = "button";
+    saveButton.textContent = "Opslaan";
+    saveButton.addEventListener("click", async () => {
+      const next = {
+        tag: card.querySelector('[data-field="tag"]').value.trim(),
+        display_order: Number(card.querySelector('[data-field="display_order"]').value) || photo.display_order,
+        title: card.querySelector('[data-field="title"]').value.trim(),
+        comment_id: card.querySelector('[data-field="comment_id"]').value.trim(),
+        copy: card.querySelector('[data-field="copy"]').value.trim(),
+        note: card.querySelector('[data-field="note"]').value.trim(),
+        image: card.querySelector('[data-field="image"]').value.trim(),
+      };
+
+      const { error } = await adminClient
+        .from(supabaseConfig.photosTable)
+        .update(next)
+        .eq("id", photo.id);
+
+      if (error) {
+        setAdminStatus("Foto opslaan lukte niet.", true);
+        return;
+      }
+
+      setAdminStatus("Foto opgeslagen.");
+      await loadAdminData();
+      await loadPhotosFromSupabase();
+    });
+
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "admin-button danger small";
+    deleteButton.type = "button";
+    deleteButton.textContent = "Verwijderen";
+    deleteButton.addEventListener("click", async () => {
+      const { error } = await adminClient
+        .from(supabaseConfig.photosTable)
+        .update({ active: false })
+        .eq("id", photo.id);
+
+      if (error) {
+        setAdminStatus("Foto verwijderen lukte niet.", true);
+        return;
+      }
+
+      setAdminStatus("Foto verwijderd.");
+      await loadAdminData();
+      await loadPhotosFromSupabase();
+    });
+
+    actions.append(saveButton, deleteButton);
+    card.append(actions);
+    adminPhotoList.append(card);
+  });
+}
+
+async function loadAdminData() {
+  const [{ count: visitCount }, { count: commentsCount }, { count: photosCount }, commentsResult] =
+    await Promise.all([
+      adminClient
+        .from(supabaseConfig.visitsTable)
+        .select("*", { count: "exact", head: true }),
+      adminClient
+        .from(supabaseConfig.commentsTable)
+        .select("*", { count: "exact", head: true }),
+      adminClient
+        .from(supabaseConfig.photosTable)
+        .select("*", { count: "exact", head: true })
+        .eq("active", true),
+      adminClient
+        .from(supabaseConfig.commentsTable)
+        .select("id, photo_id, author, body, created_at")
+        .order("created_at", { ascending: false })
+        .limit(50),
+    ]);
+
+  visitCountEl.textContent = String(visitCount || 0);
+  commentCountEl.textContent = String(commentsCount || 0);
+  photoCountEl.textContent = String(photosCount || 0);
+
+  renderAdminPhotos();
+  renderComments(adminCommentList, commentsResult.data || [], true);
+}
+
+async function loginAdmin(username, password) {
+  hideStatuses();
+
+  const { data, error } = await publicClient.rpc("admin_login", {
+    p_username: username,
+    p_password: password,
+  });
+
+  if (error || !data) {
+    setLoginStatus("Login lukte niet.", true);
+    return;
+  }
+
+  adminToken = data;
+  sessionStorage.setItem("vakantie_admin_token", adminToken);
+  adminClient = createAdminClient(adminToken);
+
+  adminLoginCard.hidden = true;
+  adminDashboard.hidden = false;
+
+  setAdminStatus("Admin ingelogd.");
+  await loadAdminData();
+}
+
+function handleRoute() {
+  const isAdminRoute = window.location.hash === "#admin";
+  publicView.hidden = isAdminRoute;
+  adminView.hidden = !isAdminRoute;
+}
+
+async function bootstrap() {
+  handleRoute();
+  applyHero(defaultHero);
+  renderFeed();
+
+  await Promise.all([loadHeroFromSupabase(), loadPhotosFromSupabase(), registerVisit()]);
+
+  if (window.location.hash === "#admin" && adminToken) {
+    adminLoginCard.hidden = true;
+    adminDashboard.hidden = false;
+    await loadAdminData();
+  }
+}
+
+adminLoginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await loginAdmin(
+    document.querySelector("#adminUsername").value.trim(),
+    document.querySelector("#adminPassword").value
+  );
+});
+
+saveHeroButton.addEventListener("click", saveHero);
+addPhotoButton.addEventListener("click", addPhoto);
+refreshAdminButton.addEventListener("click", async () => {
+  await loadHeroFromSupabase();
+  await loadPhotosFromSupabase();
+  await loadAdminData();
+  setAdminStatus("Admin ververst.");
+});
+
+window.addEventListener("hashchange", async () => {
+  handleRoute();
+  if (window.location.hash === "#admin" && adminToken) {
+    adminLoginCard.hidden = true;
+    adminDashboard.hidden = false;
+    await loadAdminData();
+  }
+});
+
+bootstrap();

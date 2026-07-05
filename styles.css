@@ -41,6 +41,12 @@ a {
   padding: 16px 12px 48px;
 }
 
+.public-view,
+.admin-view {
+  display: grid;
+  gap: 16px;
+}
+
 .hero {
   padding: 18px 16px 20px;
   border: 1px solid var(--line);
@@ -81,11 +87,26 @@ a {
 
 .hero-jump {
   display: inline-flex;
-  margin-top: 18px;
   padding: 12px 18px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--panel-soft);
+  font-weight: 800;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.hero-admin-link {
+  display: inline-flex;
+  padding: 12px 18px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
   font-weight: 800;
 }
 
@@ -344,6 +365,187 @@ a {
   line-height: 1.5;
   color: var(--ink);
   word-break: break-word;
+}
+
+.admin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-kicker {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.admin-title {
+  margin: 0;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(2.5rem, 10vw, 4rem);
+  line-height: 0.95;
+}
+
+.admin-back {
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-weight: 800;
+  background: var(--panel-soft);
+}
+
+.admin-card,
+.admin-stat-card,
+.admin-photo-card,
+.admin-comment-card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.admin-card {
+  padding: 14px;
+}
+
+.admin-card-head,
+.admin-card-actions,
+.admin-inline-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-section-title {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+}
+
+.admin-card-head .admin-section-title {
+  margin: 0;
+}
+
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.admin-stat-card {
+  padding: 14px;
+}
+
+.admin-stat-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-stat-value {
+  font-size: 1.4rem;
+}
+
+.admin-form {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-form.two-col {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-form .full {
+  grid-column: 1 / -1;
+}
+
+.admin-input,
+.admin-textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #141414;
+  color: var(--ink);
+  font: inherit;
+}
+
+.admin-input {
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.admin-textarea {
+  min-height: 100px;
+  padding: 12px;
+  resize: vertical;
+}
+
+.admin-button {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--accent);
+  color: #050505;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-button.secondary {
+  background: var(--panel-soft);
+  color: var(--ink);
+}
+
+.admin-button.danger {
+  background: #291012;
+  color: #ffd8d8;
+}
+
+.admin-button.small {
+  min-width: 0;
+  padding: 0 12px;
+}
+
+.admin-status,
+.admin-empty,
+.admin-comment-extra {
+  margin: 0;
+  color: var(--muted);
+}
+
+.admin-status[data-error="true"] {
+  color: #ff9c9c;
+}
+
+.admin-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-photo-card,
+.admin-comment-card {
+  padding: 12px;
+}
+
+.admin-comment-body {
+  margin: 10px 0;
+  line-height: 1.5;
+}
+
+.admin-comment-author {
+  font-size: 0.94rem;
+}
+
+.admin-comment-time {
+  color: var(--muted);
+  font-size: 0.8rem;
 }
 
 @media (min-width: 700px) {
