@@ -55,7 +55,7 @@ const defaultHero = {
   kicker: "Vakantie-thijn",
   title: "Scroll en oordeel later.",
   copy: "Zwarte achtergrond, domme foto's, en straks open comments onder elke foto zonder gedoe met accounts.",
-  button: "begin",
+  button: "start",
 };
 
 const defaultMemories = [
@@ -215,8 +215,8 @@ function setSelectedPhotoFile(file) {
   }
 
   photoFileMeta.textContent = selectedPhotoFile
-    ? `${selectedPhotoFile.name} gekozen`
-    : "Nog geen bestand gekozen";
+    ? `${selectedPhotoFile.name} selected`
+    : "No file selected";
 }
 
 function countWords(value) {
@@ -295,7 +295,7 @@ function renderComments(list, comments, isAdmin = false) {
     empty.className = isAdmin ? "admin-empty" : "comments-empty";
     empty.textContent = isAdmin
       ? "Nog geen comments om te beheren."
-      : "Nog geen comments. Trap jij hem af.";
+      : "No comments yet. Be the first one.";
     list.append(empty);
     return;
   }
@@ -309,7 +309,7 @@ function renderComments(list, comments, isAdmin = false) {
 
     const author = document.createElement("strong");
     author.className = isAdmin ? "admin-comment-author" : "comment-author";
-    author.textContent = comment.author || "anoniem";
+    author.textContent = comment.author || "anonymous";
 
     const time = document.createElement("span");
     time.className = isAdmin ? "admin-comment-time" : "comment-time";
@@ -355,52 +355,50 @@ async function loadComments(commentId, list, status) {
 
   if (error) {
     status.hidden = false;
-    status.textContent = "Comments laden lukte even niet.";
+    status.textContent = "Comments could not be loaded right now.";
     return;
   }
 
   renderComments(list, data || []);
 }
 
-async function submitComment(commentId, nameInput, textInput, list, status, form, counter) {
-  const nameValue = nameInput.value.trim();
+async function submitComment(commentId, textInput, list, status, form, counter) {
   const textValue = textInput.value.trim();
   const words = countWords(textValue);
 
   if (!textValue) {
     status.hidden = false;
-    status.textContent = "Typ eerst even een comment.";
+    status.textContent = "Type a comment first.";
     return;
   }
 
   if (words > 50) {
     status.hidden = false;
-    status.textContent = "Hou het bij maximaal 50 woorden.";
+    status.textContent = "Keep it under 50 words.";
     return;
   }
 
   form.classList.add("is-submitting");
   status.hidden = false;
-  status.textContent = "Bezig met posten...";
+  status.textContent = "Posting...";
 
   const { error } = await publicClient.from(supabaseConfig.commentsTable).insert({
     photo_id: commentId,
-    author: nameValue || "anoniem",
+    author: "anonymous",
     body: textValue,
   });
 
   form.classList.remove("is-submitting");
 
   if (error) {
-    status.textContent = "Posten lukte even niet.";
+    status.textContent = "Posting failed.";
     return;
   }
 
-  nameInput.value = "";
   textInput.value = "";
-  counter.textContent = "0 / 50 woorden";
+  counter.textContent = "0 / 50 words";
   counter.dataset.over = "false";
-  status.textContent = "Comment geplaatst.";
+  status.textContent = "Comment posted.";
   await loadComments(commentId, list, status);
 }
 
@@ -410,29 +408,23 @@ function createCommentSection(photo) {
 
   const summary = document.createElement("summary");
   summary.className = "comments-toggle";
-  summary.textContent = "Reacties openen";
+  summary.textContent = "Open comments";
 
   const body = document.createElement("div");
   body.className = "comments-body";
 
   const rules = document.createElement("p");
   rules.className = "comments-rules";
-  rules.textContent = "Geen login nodig. Maximaal 50 woorden per comment.";
+  rules.textContent = "No login needed. Max 50 words per comment.";
 
   const form = document.createElement("form");
   form.className = "comment-form";
-
-  const nameInput = document.createElement("input");
-  nameInput.className = "comment-input";
-  nameInput.type = "text";
-  nameInput.maxLength = 32;
-  nameInput.placeholder = "Naam (optioneel)";
 
   const textInput = document.createElement("textarea");
   textInput.className = "comment-textarea";
   textInput.rows = 3;
   textInput.maxLength = 320;
-  textInput.placeholder = "Zet hier je comment neer";
+  textInput.placeholder = "Drop your comment here";
 
   const formFooter = document.createElement("div");
   formFooter.className = "comment-form-footer";
@@ -440,12 +432,12 @@ function createCommentSection(photo) {
   const counter = document.createElement("span");
   counter.className = "comment-counter";
   counter.dataset.over = "false";
-  counter.textContent = "0 / 50 woorden";
+  counter.textContent = "0 / 50 words";
 
   const submitButton = document.createElement("button");
   submitButton.className = "comment-submit";
   submitButton.type = "submit";
-  submitButton.textContent = "Plaatsen";
+  submitButton.textContent = "Post";
 
   const status = document.createElement("p");
   status.className = "comments-status";
@@ -455,17 +447,17 @@ function createCommentSection(photo) {
   list.className = "comments-list";
 
   formFooter.append(counter, submitButton);
-  form.append(nameInput, textInput, formFooter);
+  form.append(textInput, formFooter);
 
   textInput.addEventListener("input", () => {
     const words = countWords(textInput.value);
-    counter.textContent = `${words} / 50 woorden`;
+    counter.textContent = `${words} / 50 words`;
     counter.dataset.over = words > 50 ? "true" : "false";
   });
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    await submitComment(photo.comment_id, nameInput, textInput, list, status, form, counter);
+    await submitComment(photo.comment_id, textInput, list, status, form, counter);
   });
 
   comments.addEventListener("toggle", async () => {
